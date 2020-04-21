@@ -500,14 +500,23 @@ public class DispatcherServlet extends FrameworkServlet {
 	 * <p>May be overridden in subclasses in order to initialize further strategy objects.
 	 */
 	protected void initStrategies(ApplicationContext context) {
+		// 初始化 multipart 的解析， multipartResolver Bean
 		initMultipartResolver(context);
+		// 初始化 localResolver, localeResolver
 		initLocaleResolver(context);
+		// themeResolver
 		initThemeResolver(context);
+		// 如果不是探测所有的，则获取handlerMapping这个bean的。否则，获取所有 HandlerAdapter 的子类
 		initHandlerMappings(context);
+		// handlerAdapter 的bean, 或者是 所有HandlerAdapter的子类。
 		initHandlerAdapters(context);
+		// HandlerExceptionResolver 的bean 或是HandlerExceptionResolver的子类。
 		initHandlerExceptionResolvers(context);
+		// viewNameTranslator 的bean 或是 RequestToViewNameTranslator 的子类。
 		initRequestToViewNameTranslator(context);
+		// viewResolver 的 Bean 或是 ViewResolver 的子类。
 		initViewResolvers(context);
+		// flashMapManager 的bean
 		initFlashMapManager(context);
 	}
 
@@ -591,8 +600,9 @@ public class DispatcherServlet extends FrameworkServlet {
 	 * we default to BeanNameUrlHandlerMapping.
 	 */
 	private void initHandlerMappings(ApplicationContext context) {
+		// 默认情况下 会返回两种类型的实例： RequestMappingHandlerMapping 和 BeanNameUrlHandlerMapping
 		this.handlerMappings = null;
-
+		// 是否检测所有的HandlerMapping
 		if (this.detectAllHandlerMappings) {
 			// Find all HandlerMappings in the ApplicationContext, including ancestor contexts.
 			Map<String, HandlerMapping> matchingBeans =
@@ -604,6 +614,7 @@ public class DispatcherServlet extends FrameworkServlet {
 			}
 		}
 		else {
+			// 只需要查找 name 为 handlerMapping 的 Bean 类型
 			try {
 				HandlerMapping hm = context.getBean(HANDLER_MAPPING_BEAN_NAME, HandlerMapping.class);
 				this.handlerMappings = Collections.singletonList(hm);
@@ -903,6 +914,7 @@ public class DispatcherServlet extends FrameworkServlet {
 
 
 	/**
+	 * 开始处理请求， 入口。
 	 * Exposes the DispatcherServlet-specific request attributes and delegates to {@link #doDispatch}
 	 * for the actual dispatching.
 	 */
@@ -912,6 +924,7 @@ public class DispatcherServlet extends FrameworkServlet {
 
 		// Keep a snapshot of the request attributes in case of an include,
 		// to be able to restore the original attributes after the include.
+		// 保存原始的属性信息
 		Map<String, Object> attributesSnapshot = null;
 		if (WebUtils.isIncludeRequest(request)) {
 			attributesSnapshot = new HashMap<>();
@@ -924,6 +937,7 @@ public class DispatcherServlet extends FrameworkServlet {
 			}
 		}
 
+		// 将 WebApplicationContext、localResolver、themeResolver、 ThemeSource指定给request, 供后续使用。
 		// Make framework objects available to handlers and view objects.
 		request.setAttribute(WEB_APPLICATION_CONTEXT_ATTRIBUTE, getWebApplicationContext());
 		request.setAttribute(LOCALE_RESOLVER_ATTRIBUTE, this.localeResolver);
@@ -940,6 +954,7 @@ public class DispatcherServlet extends FrameworkServlet {
 		}
 
 		try {
+			// 真正处理请求
 			doDispatch(request, response);
 		}
 		finally {
@@ -987,6 +1002,7 @@ public class DispatcherServlet extends FrameworkServlet {
 	}
 
 	/**
+	 * 真正将请求分发到处理器，并进行处理
 	 * Process the actual dispatching to the handler.
 	 * <p>The handler will be obtained by applying the servlet's HandlerMappings in order.
 	 * The HandlerAdapter will be obtained by querying the servlet's installed HandlerAdapters
@@ -1156,6 +1172,7 @@ public class DispatcherServlet extends FrameworkServlet {
 	}
 
 	/**
+	 * 如果，请求的 content-type 类型为 multipart 类型的数据，multipart/, 则将请求转化为 MultipartHttpServletRequest 类型的request.
 	 * Convert the request into a multipart request, and make multipart resolver available.
 	 * <p>If no multipart resolver is set, simply use the existing request.
 	 * @param request current HTTP request
